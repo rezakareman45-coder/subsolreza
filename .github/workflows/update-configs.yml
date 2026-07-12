@@ -1,0 +1,59 @@
+name: Update Configs
+
+on:
+  schedule:
+    - cron: '0 */5 * * *'   # هر ۵ ساعت
+  workflow_dispatch:        # دستی هم بتونی اجرا کنی
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update Sub.txt
+        run: |
+          python -c '
+import requests
+import random
+subs = [
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/v2ray/super-sub.txt",
+    "https://raw.githubusercontent.com/barry-far/V2ray-Config/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/hamedcode/port-based-v2ray-configs/main/sub/vless.txt",
+]
+all_configs = []
+n = 1
+for url in subs:
+    try:
+        r = requests.get(url, timeout=20)
+        if r.status_code == 200:
+            lines = [line.strip() for line in r.text.splitlines() if line.strip() and "#" in line]
+            selected = random.sample(lines, min(18, len(lines)))
+            for c in selected:
+                if "#" in c:
+                    base = c.split("#")[0]
+                    all_configs.append(f"{base}#reza{n}")
+                else:
+                    all_configs.append(f"{c}#reza{n}")
+                n += 1
+    except:
+        pass
+all_configs = list(dict.fromkeys(all_configs))
+with open("Sub.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(all_configs))
+print(f"Updated with {len(all_configs)} configs")
+          '
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add Sub.txt
+          git commit -m "Auto update configs - $(date)" || echo "No changes"
+          git push
