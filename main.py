@@ -53,4 +53,3 @@ txt_path, b64_path = save_subscription(
 print(f"\nفایل متنی: {txt_path}")
 print(f"فایل Base64: {b64_path}")
 
-upload_file(b64_path)
